@@ -3,69 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Swiper 效果測試 - Pikmin Postcard</title>
+  <title>Swiper 展示效果測試 - Pikmin Postcard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: "Noto Sans TC", "Segoe UI", sans-serif; background: #f7f1e8; padding: 20px; }
 
-    .controls { max-width: 800px; margin: 0 auto 20px; background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .controls { max-width: 800px; margin: 0 auto 20px; background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
     .controls label { font-size: 13px; color: #555; display: flex; align-items: center; gap: 6px; }
     .controls select { padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
     .controls .badge { background: #e3f2fd; color: #1565c0; padding: 2px 10px; border-radius: 99px; font-size: 12px; }
     .controls .badge.orange { background: #fff3e0; color: #e65100; }
 
-    /* ===== Expo 卡片展示 ===== */
-    .expo-section { max-width: 800px; margin: 0 auto; position: relative; }
+    /* ===== 容器（會根據效果換 class） ===== */
+    .showcase { max-width: 800px; margin: 0 auto; position: relative; }
+    .showcase .swiper { width: 100%; overflow: hidden; padding: 20px 0; }
+    .showcase .swiper-wrapper { align-items: center; }
 
-    .expo-swiper { width: 100%; overflow: hidden; padding: 20px 0; }
-    .expo-swiper .swiper-wrapper { align-items: center; }
+    /* ===== 通用 slide 基底 ===== */
+    .swiper-slide { position: relative; border-radius: 12px; overflow: hidden; }
+    .swiper-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    .expo-slide {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      border-radius: 28px;
-      overflow: hidden;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.18);
-      transition: box-shadow 0.3s ease;
-    }
-    .expo-slide img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 28px; }
-
-    /* 浮層 */
-    .expo-slide .overlay {
+    .slide-overlay {
       position: absolute; inset: 0; z-index: 2;
       background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.6) 100%);
-      border-radius: 28px;
+      pointer-events: none;
     }
-    .expo-slide .info {
+    .slide-info {
       position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
       padding: 30px 24px 20px;
       color: #fff;
+      pointer-events: none;
     }
-    .expo-slide .info h3 { font-size: 22px; font-weight: 600; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
-    .expo-slide .info p { font-size: 13px; opacity: 0.85; margin-top: 2px; letter-spacing: 1px; }
+    .slide-info h3 { font-size: 22px; font-weight: 600; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+    .slide-info p { font-size: 13px; opacity: 0.85; margin-top: 2px; letter-spacing: 1px; }
+
+    /* ===== 效果 1: Expo 正方形卡片 ===== */
+    .style-expo .swiper-slide { aspect-ratio: 1 / 1; border-radius: 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); }
+    .style-expo .swiper-slide img { border-radius: 28px; }
+    .style-expo .slide-overlay { border-radius: 28px; }
+    .style-expo .slide-info { border-radius: 0 0 28px 28px; }
+
+    /* ===== 效果 2: Travel 橫向長條 ===== */
+    .style-travel .swiper-slide { aspect-ratio: 3 / 2; border-radius: 20px; box-shadow: 0 6px 24px rgba(0,0,0,0.15); }
+    .style-travel .swiper-slide img { border-radius: 20px; }
+    .style-travel .slide-overlay { border-radius: 20px; background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7) 100%); }
+
+    /* ===== 效果 3: Material You 疊層 ===== */
+    .style-material .swiper-slide { aspect-ratio: 16 / 9; border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+    .style-material .swiper-slide img { border-radius: 24px; }
+    .style-material .slide-overlay { border-radius: 24px; }
+    .style-material .swiper { overflow: visible; }
 
     /* ===== 底部分頁條 ===== */
-    .expo-footer { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 12px; }
-
-    .expo-thumbs { display: flex; gap: 8px; }
-    .expo-thumb {
+    .footer-bar { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 14px; }
+    .footer-thumbs { display: flex; gap: 8px; }
+    .footer-thumb {
       width: 44px; height: 44px; border-radius: 10px; overflow: hidden; flex-shrink: 0;
       border: 2px solid transparent; cursor: pointer; transition: all 0.25s ease; opacity: 0.6;
     }
-    .expo-thumb.active { border-color: #2e7d32; opacity: 1; transform: scale(1.08); }
-    .expo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .footer-thumb.active { border-color: #2e7d32; opacity: 1; transform: scale(1.08); }
+    .footer-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    .expo-counter { font-size: 14px; color: #888; letter-spacing: 2px; min-width: 50px; text-align: center; }
-    .expo-counter strong { color: #333; }
+    .footer-counter { font-size: 14px; color: #888; letter-spacing: 2px; min-width: 50px; text-align: center; }
+    .footer-counter strong { color: #333; }
 
-    .expo-nav-btn {
+    .footer-btn {
       width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ddd; background: #fff;
       cursor: pointer; display: grid; place-items: center; font-size: 16px; color: #555;
       transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     }
-    .expo-nav-btn:hover { background: #f0f0f0; border-color: #bbb; }
+    .footer-btn:hover { background: #f0f0f0; border-color: #bbb; }
 
     .status { max-width: 800px; margin: 14px auto 0; text-align: center; font-size: 13px; color: #888; letter-spacing: 1px; }
   </style>
@@ -73,7 +81,13 @@
 <body>
 
 <div class="controls">
-  <span class="badge orange">✨ Expo 卡片 — 50/35/15 比例</span>
+  <label>展示風格：
+    <select id="styleSelect">
+      <option value="expo">🏷️ Expo 正方形卡片</option>
+      <option value="travel">✈️ Travel 橫向長條</option>
+      <option value="material">📱 Material You 疊層</option>
+    </select>
+  </label>
   <label>圓角：
     <select id="radiusSelect">
       <option value="20">20px</option>
@@ -82,32 +96,23 @@
       <option value="32">32px</option>
     </select>
   </label>
-  <label>間距：
-    <select id="gapSelect">
-      <option value="8">8px</option>
-      <option value="12">12px</option>
-      <option value="16">16px</option>
-      <option value="20">20px</option>
-    </select>
-  </label>
+  <span class="badge orange">純 Swiper MIT</span>
 </div>
 
-<div class="expo-section">
-  <div class="expo-swiper">
-    <div class="swiper" id="expoSwiper">
-      <div class="swiper-wrapper"></div>
-    </div>
+<div class="showcase style-expo" id="showcase">
+  <div class="swiper" id="mainSwiper">
+    <div class="swiper-wrapper"></div>
   </div>
 
-  <div class="expo-footer">
-    <button class="expo-nav-btn" id="prevBtn">‹</button>
-    <div class="expo-thumbs" id="thumbContainer"></div>
-    <span class="expo-counter" id="slideCounter"><strong>1</strong> / 5</span>
-    <button class="expo-nav-btn" id="nextBtn">›</button>
+  <div class="footer-bar">
+    <button class="footer-btn" id="prevBtn">‹</button>
+    <div class="footer-thumbs" id="thumbContainer"></div>
+    <span class="footer-counter" id="slideCounter"><strong>1</strong> / 5</span>
+    <button class="footer-btn" id="nextBtn">›</button>
   </div>
 </div>
 
-<div class="status">觸控可左右滑動 · 當前圖片占約 50%，左右各 35% / 15%</div>
+<div class="status">觸控可左右滑動 · 點擊縮圖跳轉</div>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
@@ -119,32 +124,45 @@ const images = [
   { src: "images/country-usa.jpg", title: "美國 · 大峽谷", sub: "美國" },
 ];
 
-// 用 creative effect 來控制每張 slide 的比例
-// 效果：當前 100% 大小，左右兩側縮小，達成視覺上 50/35/15 比例
-const creativeParams = {
-  1: { prev: { translate: ['0%', 0, -1], scale: 0.55, opacity: 0 }, next: { translate: ['0%', 0, 1], scale: 0.55, opacity: 0 } },
-  1.2: { prev: { translate: ['-70%', 0, -50], scale: 0.68, opacity: 0.4 }, next: { translate: ['10%', 0, 50], scale: 0.68, opacity: 0.4 } },
-  1.3: { prev: { translate: ['-55%', 0, -50], scale: 0.72, opacity: 0.5 }, next: { translate: ['15%', 0, 50], scale: 0.72, opacity: 0.5 } },
-  1.35: { prev: { translate: ['-50%', 0, -50], scale: 0.74, opacity: 0.55 }, next: { translate: ['15%', 0, 50], scale: 0.74, opacity: 0.55 } },
-  1.4: { prev: { translate: ['-40%', 0, -50], scale: 0.77, opacity: 0.6 }, next: { translate: ['15%', 0, 50], scale: 0.77, opacity: 0.6 } },
-  1.45: { prev: { translate: ['-30%', 0, -50], scale: 0.8, opacity: 0.65 }, next: { translate: ['15%', 0, 50], scale: 0.8, opacity: 0.65 } },
-  1.5: { prev: { translate: ['-25%', 0, -50], scale: 0.82, opacity: 0.7 }, next: { translate: ['15%', 0, 50], scale: 0.82, opacity: 0.7 } },
+let swiper = null;
+let currentStyle = 'expo';
+let currentRadius = 28;
+
+const styleConfigs = {
+  expo: {
+    label: 'Expo 正方形卡片',
+    slidesPerView: 1.35,
+    spaceBetween: 12,
+    aspectRatio: '1/1',
+    overflow: false
+  },
+  travel: {
+    label: 'Travel 橫向長條',
+    slidesPerView: 1.3,
+    spaceBetween: 14,
+    aspectRatio: '3/2',
+    overflow: false
+  },
+  material: {
+    label: 'Material You 疊層',
+    slidesPerView: 1.15,
+    spaceBetween: 10,
+    aspectRatio: '16/9',
+    overflow: true,
+    // Material You 獨特的 creative effect
+    creative: true
+  }
 };
 
-let swiper = null;
-let currentGap = 12;
-
 function buildSlides() {
-  const wrapper = document.querySelector('#expoSwiper .swiper-wrapper');
+  const wrapper = document.querySelector('#mainSwiper .swiper-wrapper');
   wrapper.innerHTML = images.map(img => `
     <div class="swiper-slide">
-      <div class="expo-slide">
-        <img src="${img.src}" alt="${img.title}">
-        <div class="overlay"></div>
-        <div class="info">
-          <h3>${img.title}</h3>
-          <p>${img.sub}</p>
-        </div>
+      <img src="${img.src}" alt="${img.title}">
+      <div class="slide-overlay"></div>
+      <div class="slide-info">
+        <h3>${img.title}</h3>
+        <p>${img.sub}</p>
       </div>
     </div>
   `).join('');
@@ -153,12 +171,12 @@ function buildSlides() {
 function buildThumbs() {
   const container = document.getElementById('thumbContainer');
   container.innerHTML = images.map((img, i) => `
-    <div class="expo-thumb${i === 0 ? ' active' : ''}" data-index="${i}">
+    <div class="footer-thumb${i === 0 ? ' active' : ''}" data-index="${i}">
       <img src="${img.src}" alt="">
     </div>
   `).join('');
 
-  document.querySelectorAll('.expo-thumb').forEach(el => {
+  document.querySelectorAll('.footer-thumb').forEach(el => {
     el.addEventListener('click', () => {
       const idx = parseInt(el.dataset.index);
       if (swiper) swiper.slideToLoop(idx);
@@ -166,68 +184,87 @@ function buildThumbs() {
   });
 }
 
-function updateRadius(radius) {
-  document.querySelectorAll('.expo-slide, .expo-slide img, .expo-slide .overlay').forEach(el => {
+function applyRadius(radius) {
+  currentRadius = radius;
+  document.querySelectorAll('.swiper-slide, .swiper-slide img, .slide-overlay').forEach(el => {
     el.style.borderRadius = radius + 'px';
+  });
+  document.querySelectorAll('.slide-info').forEach(el => {
+    el.style.borderRadius = '0 0 ' + radius + 'px ' + radius + 'px';
   });
 }
 
-// 用 scale + perspective 微調來達到 50/35/15 視覺比例
-// 核心概念：當前 slide scale=1，左側縮到約 0.5~0.55（露 15%），右側約 0.7~0.72（露 35%）
-function createSwiper() {
+function switchStyle(styleKey) {
+  currentStyle = styleKey;
+  const config = styleConfigs[styleKey];
+  if (!config) return;
+
+  // 切換 showcase class
+  const showcase = document.getElementById('showcase');
+  Object.keys(styleConfigs).forEach(k => showcase.classList.remove('style-' + k));
+  showcase.classList.add('style-' + styleKey);
+
+  // 切換 aspect ratio
+  document.querySelectorAll('.swiper-slide').forEach(el => {
+    el.style.aspectRatio = config.aspectRatio;
+  });
+
+  // 重建 swiper
   if (swiper) { swiper.destroy(true, true); swiper = null; }
 
-  swiper = new Swiper('#expoSwiper', {
-    slidesPerView: 1.35,    // 控制可見 slide 數量
+  const swiperContainer = document.getElementById('mainSwiper');
+  swiperContainer.style.overflow = config.overflow ? 'visible' : 'hidden';
+
+  const baseParams = {
+    slidesPerView: config.slidesPerView,
     centeredSlides: true,
-    spaceBetween: currentGap,
+    spaceBetween: config.spaceBetween,
     grabCursor: true,
     loop: true,
     speed: 500,
     autoplay: { delay: 4000, disableOnInteraction: false },
-    // 用 breakpoints 來調整不同螢幕的行為
     breakpoints: {
-      320: { slidesPerView: 1.2 },
-      480: { slidesPerView: 1.3 },
-      640: { slidesPerView: 1.4 },
-      768: { slidesPerView: 1.5 },
+      320: { slidesPerView: Math.max(1.1, config.slidesPerView - 0.2) },
+      480: { slidesPerView: Math.max(1.2, config.slidesPerView - 0.1) },
+      640: { slidesPerView: config.slidesPerView },
     },
     on: {
       init: function() { updateUI(this.realIndex); },
       slideChange: function() { updateUI(this.realIndex); }
     }
-  });
+  };
 
-  updateUI(0);
+  if (config.creative) {
+    baseParams.effect = 'creative';
+    baseParams.creativeEffect = {
+      limitProgress: 2,
+      prev: { translate: ['-5%', 0, -1], scale: 0.88, opacity: 0.5, origin: 'left center' },
+      next:  { translate: ['75%', 0, 80], scale: 0.96, opacity: 1, origin: 'left center' }
+    };
+  }
+
+  swiper = new Swiper('#mainSwiper', baseParams);
+  applyRadius(currentRadius);
 }
 
 function updateUI(realIndex) {
   const total = images.length;
   document.getElementById('slideCounter').innerHTML = `<strong>${realIndex + 1}</strong> / ${total}`;
-  document.querySelectorAll('.expo-thumb').forEach((el, i) => {
+  document.querySelectorAll('.footer-thumb').forEach((el, i) => {
     el.classList.toggle('active', i === realIndex);
   });
 }
 
-document.getElementById('radiusSelect').addEventListener('change', function() {
-  updateRadius(parseInt(this.value));
-});
-
-document.getElementById('gapSelect').addEventListener('change', function() {
-  currentGap = parseInt(this.value);
-  if (swiper) {
-    swiper.params.spaceBetween = currentGap;
-    swiper.update();
-  }
-});
-
+// Controls
+document.getElementById('styleSelect').addEventListener('change', function() { switchStyle(this.value); });
+document.getElementById('radiusSelect').addEventListener('change', function() { applyRadius(parseInt(this.value)); });
 document.getElementById('prevBtn').addEventListener('click', () => { if (swiper) swiper.slidePrev(); });
 document.getElementById('nextBtn').addEventListener('click', () => { if (swiper) swiper.slideNext(); });
 
 // Init
 buildSlides();
 buildThumbs();
-createSwiper();
+switchStyle('expo');
 </script>
 </body>
 </html>
