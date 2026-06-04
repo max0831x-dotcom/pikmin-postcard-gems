@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Embla Carousel 測試 - Pikmin Postcard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Noto Sans TC", "Segoe UI", sans-serif; background: #f7f1e8; padding: 20px; }
+
+    .controls { max-width: 900px; margin: 0 auto 20px; background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .controls label { font-size: 13px; color: #555; display: flex; align-items: center; gap: 6px; }
+    .controls select, .controls input[type="range"] { padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .controls input[type="range"] { width: 80px; padding: 0; }
+    .controls .badge { background: #e3f2fd; color: #1565c0; padding: 2px 10px; border-radius: 99px; font-size: 12px; }
+
+    /* ===== Embla Carousel ===== */
+    .embla-wrap { max-width: 900px; margin: 0 auto; position: relative; }
+
+    .embla { overflow: hidden; border-radius: 16px; background: #e8e0d4; }
+    .embla__viewport { overflow: hidden; }
+    .embla__container { display: flex; touch-action: pan-y pinch-zoom; align-items: center; }
+
+    .embla__slide {
+      flex: 0 0 40%;
+      min-width: 0;
+      padding: 0 4px;
+    }
+
+    /* Variable Widths: 每張不同寬度 — 佔容器百分比 */
+    .vw .embla__slide:nth-child(1) { flex: 0 0 55%; }
+    .vw .embla__slide:nth-child(2) { flex: 0 0 35%; }
+    .vw .embla__slide:nth-child(3) { flex: 0 0 70%; }
+    .vw .embla__slide:nth-child(4) { flex: 0 0 40%; }
+    .vw .embla__slide:nth-child(5) { flex: 0 0 60%; }
+    .vw .embla__slide:nth-child(6) { flex: 0 0 30%; }
+    .vw .embla__slide:nth-child(7) { flex: 0 0 50%; }
+
+    /* 等寬模式 */
+    .equal .embla__slide { flex: 0 0 40%; }
+    @media (max-width: 640px) { .equal .embla__slide { flex: 0 0 70%; } }
+
+    /* ===== 固定高度卡片 ===== */
+    .card {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      height: var(--card-height, 400px);
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .card .overlay {
+      position: absolute; inset: 0; z-index: 2;
+      background: linear-gradient(transparent 50%, rgba(0,0,0,0.6));
+      pointer-events: none;
+    }
+    .card .info {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
+      padding: 30px 20px 18px;
+      color: #fff;
+    }
+    .card .info h3 { font-size: 20px; font-weight: 600; letter-spacing: 1px; text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+    .card .info p { font-size: 13px; opacity: 0.8; margin-top: 2px; letter-spacing: 1px; }
+
+    /* ===== 導航 ===== */
+    .embla-footer { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; }
+
+    .embla-dots { display: flex; gap: 8px; }
+    .embla-dot {
+      width: 10px; height: 10px; border-radius: 50%; border: none; background: rgba(60,90,60,0.3);
+      cursor: pointer; transition: all 0.25s ease; padding: 0;
+    }
+    .embla-dot.is-active { background: #4a7c4a; width: 24px; border-radius: 99px; }
+
+    .embla-count { font-size: 14px; color: #888; letter-spacing: 2px; min-width: 50px; text-align: center; }
+    .embla-count strong { color: #333; }
+
+    .embla-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ddd; background: #fff;
+      cursor: pointer; display: grid; place-items: center; font-size: 16px; color: #555;
+      transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .embla-btn:hover { background: #f0f0f0; border-color: #bbb; }
+
+    .status { max-width: 900px; margin: 14px auto 0; text-align: center; font-size: 13px; color: #888; }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <label>模式：
+    <select id="modeSelect">
+      <option value="vw">📐 Variable Widths（每張不同）</option>
+      <option value="equal">🔲 等寬（每張相同）</option>
+    </select>
+  </label>
+  <label>高度：
+    <input type="range" id="heightRange" min="250" max="500" value="400" step="10">
+    <span id="heightLabel">400px</span>
+  </label>
+  <label>圓角：
+    <select id="radiusSelect">
+      <option value="12">12px</option>
+      <option value="16" selected>16px</option>
+      <option value="20">20px</option>
+      <option value="24">24px</option>
+    </select>
+  </label>
+  <label>對齊：
+    <select id="alignSelect">
+      <option value="center">置中</option>
+      <option value="start">靠左</option>
+    </select>
+  </label>
+  <span class="badge">Embla Carousel MIT — ~5KB</span>
+</div>
+
+<div class="embla-wrap">
+  <div class="embla vw" id="emblaRoot">
+    <div class="embla__viewport" id="emblaViewport">
+      <div class="embla__container"></div>
+    </div>
+  </div>
+
+  <div class="embla-footer">
+    <button class="embla-btn" id="prevBtn">‹</button>
+    <div class="embla-dots" id="dotContainer"></div>
+    <span class="embla-count" id="slideCount"><strong>1</strong> / 7</span>
+    <button class="embla-btn" id="nextBtn">›</button>
+  </div>
+</div>
+
+<div class="status">寬度自由變化 · 高度固定不變形 · 觸控可左右滑動</div>
+
+<script src="https://cdn.jsdelivr.net/npm/embla-carousel@8.5.2/embla-carousel.umd.min.js"></script>
+<script>
+const images = [
+  { src: "images/country-japan.jpg", title: "日本", sub: "京都清水寺" },
+  { src: "images/country-korea.jpg", title: "韓國", sub: "首爾景福宮" },
+  { src: "images/country-france.jpg", title: "法國", sub: "巴黎鐵塔" },
+  { src: "images/country-italy.jpg", title: "義大利", sub: "羅馬競技場" },
+  { src: "images/country-usa.jpg", title: "美國", sub: "大峽谷" },
+  { src: "images/country-norway.jpg", title: "挪威", sub: "峽灣" },
+  { src: "images/country-egypt.jpg", title: "埃及", sub: "金字塔" },
+];
+
+let embla = null;
+let currentRadius = 16;
+let currentHeight = 400;
+
+function buildSlides() {
+  const container = document.querySelector('.embla__container');
+  container.innerHTML = images.map(img => `
+    <div class="embla__slide">
+      <div class="card" style="border-radius: ${currentRadius}px; height: ${currentHeight}px;">
+        <img src="${img.src}" alt="${img.title}" style="border-radius: ${currentRadius}px;">
+        <div class="overlay" style="border-radius: ${currentRadius}px;"></div>
+        <div class="info">
+          <h3>${img.title}</h3>
+          <p>${img.sub}</p>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function rebuildCards() {
+  document.querySelectorAll('.card').forEach((card, i) => {
+    card.style.borderRadius = currentRadius + 'px';
+    card.style.height = currentHeight + 'px';
+    const img = card.querySelector('img');
+    if (img) img.style.borderRadius = currentRadius + 'px';
+    const ov = card.querySelector('.overlay');
+    if (ov) ov.style.borderRadius = currentRadius + 'px';
+  });
+}
+
+function buildDots() {
+  const container = document.getElementById('dotContainer');
+  container.innerHTML = images.map((_, i) => `
+    <button class="embla-dot${i === 0 ? ' is-active' : ''}" data-index="${i}"></button>
+  `).join('');
+
+  document.querySelectorAll('.embla-dot').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.index);
+      if (embla) embla.scrollTo(idx);
+    });
+  });
+}
+
+function initEmbla(mode, align) {
+  if (embla) embla.destroy();
+
+  const root = document.getElementById('emblaRoot');
+  root.className = 'embla ' + mode;
+
+  embla = EmblaCarousel(document.getElementById('emblaViewport'), {
+    loop: true,
+    align: align,
+    dragFree: true,
+  });
+
+  embla.on('select', updateUI);
+  updateUI();
+}
+
+function updateUI() {
+  if (!embla) return;
+  const idx = embla.selectedScrollSnap();
+  const total = images.length;
+  document.getElementById('slideCount').innerHTML = `<strong>${idx + 1}</strong> / ${total}`;
+  document.querySelectorAll('.embla-dot').forEach((el, i) => {
+    el.classList.toggle('is-active', i === idx);
+  });
+}
+
+// Controls
+document.getElementById('modeSelect').addEventListener('change', function() {
+  initEmbla(this.value, document.getElementById('alignSelect').value);
+});
+document.getElementById('alignSelect').addEventListener('change', function() {
+  initEmbla(document.getElementById('modeSelect').value, this.value);
+});
+document.getElementById('radiusSelect').addEventListener('change', function() {
+  currentRadius = parseInt(this.value);
+  rebuildCards();
+});
+document.getElementById('heightRange').addEventListener('input', function() {
+  currentHeight = parseInt(this.value);
+  document.getElementById('heightLabel').textContent = currentHeight + 'px';
+  rebuildCards();
+});
+document.getElementById('prevBtn').addEventListener('click', () => { if (embla) embla.scrollPrev(); });
+document.getElementById('nextBtn').addEventListener('click', () => { if (embla) embla.scrollNext(); });
+
+// Init
+buildSlides();
+buildDots();
+initEmbla('vw', 'center');
+</script>
+</body>
+</html>

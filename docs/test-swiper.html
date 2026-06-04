@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swiper 展示效果測試 - Pikmin Postcard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Noto Sans TC", "Segoe UI", sans-serif; background: #000; padding: 20px; }
+
+    .controls { max-width: 900px; margin: 0 auto 20px; background: #1a1a1a; border-radius: 12px; padding: 16px 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border: 1px solid #333; }
+    .controls label { font-size: 13px; color: #aaa; display: flex; align-items: center; gap: 6px; }
+    .controls select { padding: 4px 8px; border: 1px solid #444; border-radius: 6px; font-size: 13px; background: #222; color: #ddd; }
+    .controls .badge { background: #e3f2fd; color: #1565c0; padding: 2px 10px; border-radius: 99px; font-size: 12px; }
+    .controls .badge.orange { background: #fff3e0; color: #e65100; }
+
+    /* ===== 展示區（三種風格共用） ===== */
+    .showcase { max-width: 900px; margin: 0 auto; position: relative; }
+    .showcase .swiper { width: 100%; overflow: hidden; padding: 30px 0; }
+
+    .swiper-slide { position: relative; overflow: hidden; }
+    .swiper-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .slide-label {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
+      background: linear-gradient(transparent, rgba(0,0,0,0.75));
+      padding: 40px 28px 24px;
+      color: #fff;
+      pointer-events: none;
+    }
+    .slide-label h3 { font-size: 24px; font-weight: 600; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .slide-label p { font-size: 14px; opacity: 0.8; margin-top: 3px; letter-spacing: 1px; }
+
+    /* ===== Expo 風格（展覽式焦點） ===== */
+    .style-expo { background: #000; border-radius: 20px; }
+    .style-expo .swiper-slide { border-radius: 20px; overflow: hidden; }
+    .style-expo .swiper-slide img { border-radius: 20px; }
+    .style-expo .swiper-slide-active { box-shadow: 0 0 40px rgba(255,255,255,0.08); }
+
+    /* ===== Travel 風格（橫向長條） ===== */
+    .style-travel { border-radius: 20px; }
+    .style-travel .swiper-slide { border-radius: 20px; overflow: hidden; }
+    .style-travel .swiper-slide img { border-radius: 20px; }
+
+    /* ===== Material You 風格（疊層） ===== */
+    .style-material { border-radius: 20px; }
+    .style-material .swiper-slide { border-radius: 24px; overflow: hidden; }
+    .style-material .swiper-slide img { border-radius: 24px; }
+    .style-material .swiper { overflow: visible; }
+
+    /* ===== 底部分頁 ===== */
+    .footer-bar { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; }
+    .footer-thumbs { display: flex; gap: 8px; }
+    .footer-thumb {
+      width: 44px; height: 44px; border-radius: 10px; overflow: hidden; flex-shrink: 0;
+      border: 2px solid transparent; cursor: pointer; transition: all 0.25s ease; opacity: 0.6;
+    }
+    .footer-thumb.active { border-color: #fff; opacity: 1; transform: scale(1.08); }
+    .footer-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .footer-counter { font-size: 14px; color: #888; letter-spacing: 2px; min-width: 50px; text-align: center; }
+    .footer-counter strong { color: #ccc; }
+
+    .footer-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid #444; background: #1a1a1a;
+      cursor: pointer; display: grid; place-items: center; font-size: 18px; color: #ccc;
+      transition: all 0.2s ease;
+    }
+    .footer-btn:hover { background: #333; border-color: #666; color: #fff; }
+
+    .status { max-width: 900px; margin: 14px auto 0; text-align: center; font-size: 13px; color: #666; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <label>展示風格：
+    <select id="styleSelect">
+      <option value="expo">🏛️ Expo 展覽焦點（中央放大）</option>
+      <option value="travel">✈️ Travel 橫向預覽</option>
+      <option value="material">📱 Material You 疊層</option>
+    </select>
+  </label>
+  <label>圓角：
+    <select id="radiusSelect">
+      <option value="16">16px</option>
+      <option value="20" selected>20px</option>
+      <option value="24">24px</option>
+      <option value="28">28px</option>
+    </select>
+  </label>
+  <span class="badge orange">Swiper MIT 免費</span>
+</div>
+
+<div class="showcase style-expo" id="showcase">
+  <div class="swiper" id="mainSwiper">
+    <div class="swiper-wrapper"></div>
+  </div>
+
+  <div class="footer-bar">
+    <button class="footer-btn" id="prevBtn">‹</button>
+    <div class="footer-thumbs" id="thumbContainer"></div>
+    <span class="footer-counter" id="slideCounter"><strong>1</strong> / 5</span>
+    <button class="footer-btn" id="nextBtn">›</button>
+  </div>
+</div>
+
+<div class="status">觸控可左右滑動 · 點擊縮圖跳轉</div>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+const images = [
+  { src: "images/country-japan.jpg", title: "日本 · 京都清水寺", sub: "日本" },
+  { src: "images/country-korea.jpg", title: "韓國 · 首爾景福宮", sub: "韓國" },
+  { src: "images/country-france.jpg", title: "法國 · 巴黎鐵塔", sub: "法國" },
+  { src: "images/country-italy.jpg", title: "義大利 · 羅馬競技場", sub: "義大利" },
+  { src: "images/country-usa.jpg", title: "美國 · 大峽谷", sub: "美國" },
+];
+
+let swiper = null;
+let currentStyle = 'expo';
+let currentRadius = 20;
+
+const styleConfigs = {
+  expo: {
+    slidesPerView: 1.5,
+    spaceBetween: 20,
+    aspect: '4 / 5',
+    overflow: false,
+    creative: {
+      effect: 'creative',
+      creativeEffect: {
+        limitProgress: 3,
+        prev: { translate: ['-18%', 0, -100], scale: 0.7, opacity: 0.4 },
+        next: { translate: ['18%', 0, -100], scale: 0.7, opacity: 0.4 }
+      }
+    }
+  },
+  travel: {
+    slidesPerView: 1.3,
+    spaceBetween: 16,
+    aspect: '16 / 10',
+    overflow: false,
+    creative: {
+      effect: 'creative',
+      creativeEffect: {
+        limitProgress: 2,
+        prev: { translate: ['-12%', 0, -80], scale: 0.78, opacity: 0.5 },
+        next: { translate: ['12%', 0, -80], scale: 0.78, opacity: 0.5 }
+      }
+    }
+  },
+  material: {
+    slidesPerView: 1.15,
+    spaceBetween: 10,
+    aspect: '16 / 9',
+    overflow: true,
+    creative: {
+      effect: 'creative',
+      creativeEffect: {
+        limitProgress: 2,
+        prev: { translate: ['-6%', 0, -1], scale: 0.88, opacity: 0.5, origin: 'left center' },
+        next:  { translate: ['75%', 0, 80], scale: 0.96, opacity: 1, origin: 'left center' }
+      }
+    }
+  }
+};
+
+function buildSlides() {
+  const wrapper = document.querySelector('#mainSwiper .swiper-wrapper');
+  wrapper.innerHTML = images.map(img => `
+    <div class="swiper-slide">
+      <img src="${img.src}" alt="${img.title}">
+      <div class="slide-label">
+        <h3>${img.title}</h3>
+        <p>${img.sub}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildThumbs() {
+  const container = document.getElementById('thumbContainer');
+  container.innerHTML = images.map((img, i) => `
+    <div class="footer-thumb${i === 0 ? ' active' : ''}" data-index="${i}">
+      <img src="${img.src}" alt="">
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.footer-thumb').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.index);
+      if (swiper) swiper.slideToLoop(idx);
+    });
+  });
+}
+
+function applyRadius(radius) {
+  currentRadius = radius;
+  document.querySelectorAll('.swiper-slide, .swiper-slide img, .slide-label').forEach(el => {
+    el.style.borderRadius = radius + 'px';
+  });
+  document.querySelectorAll('.slide-label').forEach(el => {
+    el.style.borderRadius = '0 0 ' + radius + 'px ' + radius + 'px';
+  });
+}
+
+function switchStyle(styleKey) {
+  currentStyle = styleKey;
+  const config = styleConfigs[styleKey];
+  if (!config) return;
+
+  const showcase = document.getElementById('showcase');
+  Object.keys(styleConfigs).forEach(k => showcase.classList.remove('style-' + k));
+  showcase.classList.add('style-' + styleKey);
+
+  // Aspect ratio
+  document.querySelectorAll('.swiper-slide').forEach(el => {
+    el.style.aspectRatio = config.aspect;
+  });
+
+  // 重建 swiper
+  if (swiper) { swiper.destroy(true, true); swiper = null; }
+
+  document.getElementById('mainSwiper').style.overflow = config.overflow ? 'visible' : 'hidden';
+
+  const baseParams = {
+    centeredSlides: true,
+    spaceBetween: config.spaceBetween,
+    grabCursor: true,
+    loop: true,
+    speed: 550,
+    autoplay: { delay: 4000, disableOnInteraction: false },
+    slidesPerView: config.slidesPerView,
+    breakpoints: {
+      320: { slidesPerView: Math.max(1.1, config.slidesPerView - 0.3) },
+      480: { slidesPerView: Math.max(1.2, config.slidesPerView - 0.15) },
+      640: { slidesPerView: config.slidesPerView },
+    },
+    on: {
+      init: function() { updateUI(this.realIndex); },
+      slideChange: function() { updateUI(this.realIndex); }
+    }
+  };
+
+  if (config.creative) {
+    Object.assign(baseParams, config.creative);
+  }
+
+  swiper = new Swiper('#mainSwiper', baseParams);
+  applyRadius(currentRadius);
+}
+
+function updateUI(realIndex) {
+  const total = images.length;
+  document.getElementById('slideCounter').innerHTML = `<strong>${realIndex + 1}</strong> / ${total}`;
+  document.querySelectorAll('.footer-thumb').forEach((el, i) => {
+    el.classList.toggle('active', i === realIndex);
+  });
+}
+
+// Controls
+document.getElementById('styleSelect').addEventListener('change', function() { switchStyle(this.value); });
+document.getElementById('radiusSelect').addEventListener('change', function() { applyRadius(parseInt(this.value)); });
+document.getElementById('prevBtn').addEventListener('click', () => { if (swiper) swiper.slidePrev(); });
+document.getElementById('nextBtn').addEventListener('click', () => { if (swiper) swiper.slideNext(); });
+
+// Init
+buildSlides();
+buildThumbs();
+switchStyle('expo');
+</script>
+</body>
+</html>
