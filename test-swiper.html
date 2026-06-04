@@ -22,9 +22,13 @@
     .swiper-slide { position: relative; overflow: hidden; border-radius: 12px; }
     .swiper-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+    /* Material You 專用：卡片圓角+陰影 */
+    .material-slide { border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .material-slide img { border-radius: 16px; }
+
     .slide-info { position: absolute; bottom: 0; left: 0; right: 0; z-index: 5;
       background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 50px 32px 28px;
-      pointer-events: none; }
+      pointer-events: none; border-radius: 0 0 16px 16px; }
     .slide-info h2 { font-size: 28px; font-weight: 600; color: #fff; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
     .slide-info p { font-size: 14px; color: rgba(255,255,255,0.85); margin-top: 4px; letter-spacing: 1px; }
 
@@ -52,7 +56,7 @@
       <option value="cards">Cards（卡片）</option>
       <option value="creative-expo">✨ Expo 風格（視差+縮放）</option>
       <option value="creative-stack">✨ 卡片堆疊自訂</option>
-      <option value="creative-material">✨ Material You 風格（疊層+陰影）</option>
+      <option value="creative-material">✨ Material You 風格（疊層+圓角）</option>
     </select>
   </label>
   <span class="badge green">Swiper 免費 MIT</span>
@@ -99,39 +103,69 @@
 const effectConfigs = {
   fade: {
     label: 'Fade（淡入淡出）',
-    params: { effect: 'fade', fadeEffect: { crossFade: true }, speed: 800, slidesPerView: 1, centeredSlides: false }
+    params: { effect: 'fade', fadeEffect: { crossFade: true }, speed: 800, slidesPerView: 1, centeredSlides: false },
+    addClass: false
   },
   slide: {
     label: 'Slide（滑入）',
-    params: { effect: 'slide', speed: 600, slidesPerView: 1, centeredSlides: false }
+    params: { effect: 'slide', speed: 600, slidesPerView: 1, centeredSlides: false },
+    addClass: false
   },
   coverflow: {
     label: 'Coverflow（3D）',
-    params: { effect: 'coverflow', slidesPerView: 2, centeredSlides: true, coverflowEffect: { rotate: 30, stretch: 0, depth: 100, modifier: 1, slideShadows: true }, speed: 600 }
+    params: { effect: 'coverflow', slidesPerView: 2, centeredSlides: true, coverflowEffect: { rotate: 30, stretch: 0, depth: 100, modifier: 1, slideShadows: true }, speed: 600 },
+    addClass: false
   },
   cube: {
     label: 'Cube（立方體）',
-    params: { effect: 'cube', speed: 800, cubeEffect: { shadow: true, slideShadows: true, shadowOffset: 20, shadowScale: 0.94 } }
+    params: { effect: 'cube', speed: 800, cubeEffect: { shadow: true, slideShadows: true, shadowOffset: 20, shadowScale: 0.94 } },
+    addClass: false
   },
   flip: {
     label: 'Flip（翻牌）',
-    params: { effect: 'flip', speed: 800, flipEffect: { slideShadows: true, limitRotation: true } }
+    params: { effect: 'flip', speed: 800, flipEffect: { slideShadows: true, limitRotation: true } },
+    addClass: false
   },
   cards: {
     label: 'Cards（卡片）',
-    params: { effect: 'cards', slidesPerView: 'auto', centeredSlides: true, cardsEffect: { perSlideOffset: 18, perSlideRotate: 3, slideShadows: false } }
+    params: { effect: 'cards', slidesPerView: 'auto', centeredSlides: true, cardsEffect: { perSlideOffset: 18, perSlideRotate: 3, slideShadows: false } },
+    addClass: false
   },
   'creative-expo': {
     label: '✨ Expo 風格（視差+縮放）',
-    params: { effect: 'creative', speed: 600, slidesPerView: 1.5, centeredSlides: true, grabCursor: true, creativeEffect: { prev: { translate: ['-15%', 0, -100], scale: 0.82, opacity: 0.6 }, next: { translate: ['15%', 0, -100], scale: 0.82, opacity: 0.6 } } }
+    params: { effect: 'creative', speed: 600, slidesPerView: 1.5, centeredSlides: true, grabCursor: true, creativeEffect: { prev: { translate: ['-15%', 0, -100], scale: 0.82, opacity: 0.6 }, next: { translate: ['15%', 0, -100], scale: 0.82, opacity: 0.6 } } },
+    addClass: false
   },
   'creative-stack': {
     label: '✨ 卡片堆疊自訂',
-    params: { effect: 'creative', speed: 500, slidesPerView: 1.3, centeredSlides: true, creativeEffect: { prev: { translate: ['-35%', 8, -200], rotate: [-5, 0, 0], scale: 0.85, opacity: 0.85 }, next: { translate: ['35%', 8, -200], rotate: [5, 0, 0], scale: 0.85, opacity: 0.85 } } }
+    params: { effect: 'creative', speed: 500, slidesPerView: 1.3, centeredSlides: true, creativeEffect: { prev: { translate: ['-35%', 8, -200], rotate: [-5, 0, 0], scale: 0.85, opacity: 0.85 }, next: { translate: ['35%', 8, -200], rotate: [5, 0, 0], scale: 0.85, opacity: 0.85 } } },
+    addClass: false
   },
   'creative-material': {
-    label: '✨ Material You 風格（疊層+陰影）',
-    params: { effect: 'creative', speed: 500, slidesPerView: 1.2, centeredSlides: true, grabCursor: true, creativeEffect: { limitProgress: 2, prev: { translate: ['-5%', 0, -1], scale: 0.9, opacity: 0.6, shadow: true, origin: 'left center' }, next: { translate: ['80%', 0, 80], scale: 0.97, opacity: 1, shadow: true, origin: 'left center' } } }
+    label: '✨ Material You 風格（疊層+圓角）',
+    params: {
+      effect: 'creative',
+      speed: 450,
+      slidesPerView: 1.15,
+      centeredSlides: true,
+      grabCursor: true,
+      creativeEffect: {
+        limitProgress: 2,
+        prev: {
+          translate: ['-6%', 0, -1],
+          scale: 0.88,
+          opacity: 0.5,
+          origin: 'left center'
+        },
+        next: {
+          translate: ['75%', 0, 80],
+          scale: 0.96,
+          opacity: 1,
+          origin: 'left center'
+        }
+      }
+    },
+    addClass: true
   }
 };
 
@@ -142,6 +176,10 @@ function createSwiper(effectKey) {
   if (!config) return;
 
   if (swiper) { swiper.destroy(true, true); swiper = null; }
+
+  // 加/移除圓角 class
+  document.querySelectorAll('.swiper-slide').forEach(s => s.classList.toggle('material-slide', config.addClass));
+  document.querySelector('.swiper-container').style.borderRadius = config.addClass ? '16px' : '14px';
 
   document.getElementById('currentLabel').textContent = config.label;
 
