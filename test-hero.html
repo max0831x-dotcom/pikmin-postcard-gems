@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero 效果測試 - Pikmin Postcard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Noto Sans TC", "Segoe UI", sans-serif; background: #f7f1e8; padding: 20px; }
+    .controls { max-width: 1000px; margin: 0 auto 20px; background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .controls label { font-size: 13px; color: #555; display: flex; align-items: center; gap: 6px; }
+    .controls select, .controls input[type="range"] { padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .controls .badge { background: #e8f5e9; color: #2e7d32; padding: 2px 10px; border-radius: 99px; font-size: 12px; }
+    .hero { position: relative; overflow: hidden; width: 100%; max-width: 1000px; margin: 0 auto; border-radius: 14px; box-shadow: 0 8px 30px rgba(40,30,15,0.15); background: #fff; }
+    .hero-slides { width: 100%; position: relative; aspect-ratio: 1280 / 511; overflow: hidden; background: #eee; }
+    .hero-slide { position: absolute; inset: 0; display: block; background-size: cover; background-position: center; }
+
+    .effect-kenburns .hero-slide { opacity: 0; transition: opacity 1.2s ease; }
+    .effect-kenburns .hero-slide.active { opacity: 1; z-index: 1; }
+    .effect-kenburns .hero-slide .slide-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1); transition: transform 7s ease; }
+    .effect-kenburns .hero-slide.active .slide-img { transform: scale(1.08); }
+
+    .effect-slide .hero-slide { transform: translateX(100%); transition: transform 0.7s ease; z-index: 0; }
+    .effect-slide .hero-slide.active { transform: translateX(0); z-index: 1; }
+    .effect-slide .hero-slide.exit-left { transform: translateX(-100%); }
+
+    .effect-flip .hero-slides { perspective: 1200px; }
+    .effect-flip .hero-slide { opacity: 0; transform: rotateY(90deg); transition: transform 0.8s ease, opacity 0.8s ease; backface-visibility: hidden; }
+    .effect-flip .hero-slide.active { opacity: 1; transform: rotateY(0); z-index: 1; }
+    .effect-flip .hero-slide.exit { transform: rotateY(-90deg); }
+
+    .effect-zoom .hero-slide { opacity: 0; transform: scale(0.85); transition: transform 0.6s ease, opacity 0.6s ease; }
+    .effect-zoom .hero-slide.active { opacity: 1; transform: scale(1); z-index: 1; }
+    .effect-zoom .hero-slide .slide-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.12); transition: transform 6s ease; }
+    .effect-zoom .hero-slide.active .slide-img { transform: scale(1); }
+
+    .effect-stack .hero-slide { transition: transform 0.5s ease, opacity 0.5s ease; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .effect-stack .hero-slide:nth-child(1) { transform: rotate(0deg) translateY(0); opacity: 1; z-index: 5; }
+    .effect-stack .hero-slide:nth-child(2) { transform: rotate(3deg) translateY(6px); opacity: 0.85; z-index: 4; }
+    .effect-stack .hero-slide:nth-child(3) { transform: rotate(-2deg) translateY(12px); opacity: 0.7; z-index: 3; }
+    .effect-stack .hero-slide:nth-child(4) { transform: rotate(4deg) translateY(18px); opacity: 0.55; z-index: 2; }
+    .effect-stack .hero-slide:nth-child(5) { transform: rotate(-3deg) translateY(24px); opacity: 0.4; z-index: 1; }
+
+    .effect-blur .hero-slide { opacity: 0; filter: blur(12px); transition: opacity 1s ease, filter 1s ease; }
+    .effect-blur .hero-slide.active { opacity: 1; filter: blur(0); z-index: 1; }
+
+    .effect-parallax .hero-slide { opacity: 0; transition: opacity 1s ease; }
+    .effect-parallax .hero-slide.active { opacity: 1; z-index: 1; }
+    .effect-parallax .hero-slide .slide-img { width: 110%; height: 110%; object-fit: cover; object-position: center; transform: translateX(0); transition: transform 9s ease; }
+    .effect-parallax .hero-slide.active .slide-img { transform: translateX(-4%); }
+
+    .effect-zoomfade .hero-slide { opacity: 0; transform: scale(1.1); transition: transform 0.8s ease, opacity 0.8s ease; }
+    .effect-zoomfade .hero-slide.active { opacity: 1; transform: scale(1); z-index: 1; }
+    .effect-zoomfade .hero-slide .slide-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1); transition: transform 5s ease; }
+    .effect-zoomfade .hero-slide.active .slide-img { transform: scale(1.06); }
+
+    .hero-info { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+      background: linear-gradient(transparent, rgba(0,0,0,0.65)); padding: 40px 32px 28px; pointer-events: none; }
+    .hero-info h2 { font-size: 28px; font-weight: 600; color: #fff; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+    .hero-info p { font-size: 14px; color: rgba(255,255,255,0.85); margin-top: 4px; letter-spacing: 1px; }
+    .hero-dots { position: absolute; z-index: 10; bottom: 16px; right: 28px; display: flex; gap: 8px; }
+    .hero-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); background: transparent; cursor: pointer; pointer-events: auto; transition: all 0.3s ease; }
+    .hero-dot.active { background: #fff; width: 24px; border-radius: 99px; border-color: #fff; }
+    .effect-label { max-width: 1000px; margin: 12px auto 0; text-align: center; font-size: 14px; color: #888; letter-spacing: 2px; }
+    .effect-label strong { color: #333; }
+  </style>
+</head>
+<body>
+<div class="controls">
+  <label>切換效果：
+    <select id="effectSelect">
+      <option value="kenburns">① Ken Burns（緩慢縮放）</option>
+      <option value="slide">② 滑入 Slide In</option>
+      <option value="flip">③ 翻牌 Flip</option>
+      <option value="zoom">④ 縮放 Zoom In</option>
+      <option value="stack">⑤ 卡片堆疊 Card Stack</option>
+      <option value="blur">⑥ 模糊入 Blur In</option>
+      <option value="parallax">⑦ 視差位移 Parallax</option>
+      <option value="zoomfade">⑧ 縮放淡入 Zoom-Fade</option>
+    </select>
+  </label>
+  <span class="badge">不動原始圖片</span>
+  <span class="badge">純 CSS 效果</span>
+</div>
+<section class="hero effect-kenburns" id="hero">
+  <div class="hero-slides" id="heroSlides"></div>
+  <div class="hero-info" id="heroInfo">
+    <h2 id="slideTitle">靜岡 · 日本庭園</h2>
+    <p id="slideSub">日本 · 靜岡</p>
+  </div>
+  <div class="hero-dots" id="heroDots"></div>
+</section>
+<div class="effect-label">目前效果：<strong id="currentLabel">Ken Burns（緩慢縮放）</strong></div>
+
+<script>
+const heroImages = [
+  { src: "images/banner-01.jpg", title: "京都 · 清水寺", sub: "日本 · 京都" },
+  { src: "images/banner-02.jpg", title: "東京 · 淺草寺", sub: "日本 · 東京" },
+  { src: "images/banner-03.jpg", title: "首爾 · 景福宮", sub: "韓國 · 首爾" },
+  { src: "images/banner-04.jpg", title: "巴黎 · 艾菲爾鐵塔", sub: "法國 · 巴黎" },
+  { src: "images/banner-05.jpg", title: "新加坡 · 濱海灣", sub: "新加坡" },
+];
+const effects = {
+  kenburns: { cls: "effect-kenburns", label: "① Ken Burns（緩慢縮放）" },
+  slide:    { cls: "effect-slide",    label: "② 滑入 Slide In" },
+  flip:     { cls: "effect-flip",     label: "③ 翻牌 Flip" },
+  zoom:     { cls: "effect-zoom",     label: "④ 縮放 Zoom In" },
+  stack:    { cls: "effect-stack",    label: "⑤ 卡片堆疊 Card Stack" },
+  blur:     { cls: "effect-blur",     label: "⑥ 模糊入 Blur In" },
+  parallax: { cls: "effect-parallax", label: "⑦ 視差位移 Parallax" },
+  zoomfade: { cls: "effect-zoomfade", label: "⑧ 縮放淡入 Zoom-Fade" },
+};
+let currentSlide = 0;
+let slideTimer = null;
+function buildSlides() {
+  const container = document.getElementById('heroSlides');
+  const dotsContainer = document.getElementById('heroDots');
+  container.innerHTML = '';
+  dotsContainer.innerHTML = '';
+  heroImages.forEach((img, i) => {
+    const div = document.createElement('div');
+    div.className = 'hero-slide' + (i === 0 ? ' active' : '');
+    const imgEl = document.createElement('img');
+    imgEl.className = 'slide-img';
+    imgEl.src = img.src;
+    imgEl.alt = img.title;
+    div.appendChild(imgEl);
+    container.appendChild(div);
+    const dot = document.createElement('button');
+    dot.className = 'hero-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goToSlide(i));
+    dotsContainer.appendChild(dot);
+  });
+}
+function goToSlide(index) {
+  if (index === currentSlide) return;
+  const slides = document.querySelectorAll('.hero-slide');
+  const dots = document.querySelectorAll('.hero-dot');
+  const info = heroImages[index];
+  if (document.getElementById('hero').classList.contains('effect-stack')) {
+    slides.forEach((s, i) => {
+      const offset = (i - index + slides.length) % slides.length;
+      s.style.transform = 'rotate(' + (offset * 3) + 'deg) translateY(' + (offset * 6) + 'px)';
+      s.style.opacity = Math.max(0.4, 1 - offset * 0.15);
+      s.style.zIndex = slides.length - offset;
+    });
+  } else {
+    slides.forEach(s => s.classList.remove('active', 'exit-left', 'exit'));
+    dots.forEach(d => d.classList.remove('active'));
+    if (document.getElementById('hero').classList.contains('effect-slide')) {
+      slides[currentSlide].classList.add('exit-left');
+    }
+    if (document.getElementById('hero').classList.contains('effect-flip')) {
+      slides[currentSlide].classList.add('exit');
+    }
+    slides[index].classList.add('active');
+    dots[index].classList.add('active');
+  }
+  document.getElementById('slideTitle').textContent = info.title;
+  document.getElementById('slideSub').textContent = info.sub;
+  currentSlide = index;
+  resetTimer();
+}
+function nextSlide() { goToSlide((currentSlide + 1) % heroImages.length); }
+function resetTimer() { if (slideTimer) clearInterval(slideTimer); slideTimer = setInterval(nextSlide, 4500); }
+function changeEffect(effectKey) {
+  const hero = document.getElementById('hero');
+  const ef = effects[effectKey];
+  if (!ef) return;
+  Object.values(effects).forEach(e => hero.classList.remove(e.cls));
+  hero.classList.add(ef.cls);
+  document.getElementById('currentLabel').textContent = ef.label;
+  const slides = document.querySelectorAll('.hero-slide');
+  slides.forEach((s, i) => {
+    if (i === currentSlide) s.classList.add('active');
+    else s.classList.remove('active', 'exit-left', 'exit');
+    if (effectKey === 'stack') {
+      const offset = (i - currentSlide + slides.length) % slides.length;
+      s.style.transform = 'rotate(' + (offset * 3) + 'deg) translateY(' + (offset * 6) + 'px)';
+      s.style.opacity = Math.max(0.4, 1 - offset * 0.15);
+      s.style.zIndex = slides.length - offset;
+    } else {
+      s.style.transform = ''; s.style.opacity = ''; s.style.zIndex = '';
+    }
+  });
+}
+document.getElementById('effectSelect').addEventListener('change', function() { changeEffect(this.value); });
+buildSlides();
+changeEffect('kenburns');
+resetTimer();
+</script>
+</body>
+</html>
